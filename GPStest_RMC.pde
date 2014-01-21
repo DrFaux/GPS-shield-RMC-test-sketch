@@ -1,5 +1,6 @@
 // A simple sketch to read GPS data and parse the $GPRMC string 
 // see http://www.ladyada.net/make/gpsshield for more info
+// forked for use with LCD display, for GPS WikiSeat
 
 // If using Arduino IDE prior to version 1.0,
 // make sure to install newsoftserial from Mikal Hart
@@ -12,19 +13,25 @@
  #include "NewSoftSerial.h"
 #endif
 
+// include the library code:
+#include <LiquidCrystal.h>
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
 // Use pins 2 and 3 to talk to the GPS. 2 is the TX pin, 3 is the RX pin
 #if ARDUINO >= 100
-SoftwareSerial mySerial = SoftwareSerial(2, 3);
+SoftwareSerial mySerial = SoftwareSerial(8, 9);
 #else
-NewSoftSerial mySerial = NewSoftSerial(2, 3);
+NewSoftSerial mySerial = NewSoftSerial(8, 9);
 #endif
 
 // Use pin 4 to control power to the GPS
-#define powerpin 4
+#define powerpin 7
 
 // Set the GPSRATE to the baud rate of the GPS module. Most are 4800
 // but some are 38400 or other. Check the datasheet!
-#define GPSRATE 4800
+#define GPSRATE 9600
 //#define GPSRATE 38400
 
 // The buffer size that will hold a GPS sentence. They tend to be 80 characters long
@@ -46,6 +53,11 @@ char status;
 
 void setup() 
 { 
+    // set up the LCD's number of columns and rows: 
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.print("hello, world!");
+  
   if (powerpin) {
     pinMode(powerpin, OUTPUT);
   }
@@ -78,6 +90,8 @@ uint32_t parsedecimal(char *str) {
   return d;
 }
 
+
+
 void readline(void) {
   char c;
   
@@ -99,7 +113,7 @@ void readline(void) {
  
 void loop() 
 { 
-  uint32_t tmp;
+   uint32_t tmp;
   
   Serial.print("\n\rRead: ");
   readline();
@@ -174,28 +188,42 @@ void loop()
     Serial.print(date, DEC); Serial.print('/');
     Serial.println(year, DEC);
     
-    Serial.print("\tLat: "); 
+    
+        // set the cursor to column 0, line 0
+  lcd.setCursor(0, 0);
+  lcd.print(' ');
+  if(latitude == 0){
+    lcd.print("                                                     lost");}
+  else{
+  
     if (latdir == 'N')
-       Serial.print('+');
+       lcd.print('N');
     else if (latdir == 'S')
-       Serial.print('-');
+       lcd.print('S');
+           lcd.print(' ');
 
-    Serial.print(latitude/1000000, DEC); Serial.print("* ");
-    Serial.print((latitude/10000)%100, DEC); Serial.print('\''); Serial.print(' ');
-    Serial.print((latitude%10000)*6/1000, DEC); Serial.print('.');
-    Serial.print(((latitude%10000)*6/10)%100, DEC); Serial.println('"');
+    lcd.print(latitude/1000000, DEC); lcd.print((char)223); lcd.print(' ');
+    lcd.print((latitude/10000)%100, DEC); lcd.print('\''); lcd.print(' ');
+    lcd.print((latitude%10000)*6/1000, DEC); lcd.print('.');
+    lcd.print(((latitude%10000)*6/10)%100, DEC); lcd.print('"');
+    lcd.print("   ");
    
-    Serial.print("\tLong: ");
+           // set the cursor to column 0, line 1
+  lcd.setCursor(0, 1);
+   lcd.print(' ');
     if (longdir == 'E')
-       Serial.print('+');
+       lcd.print('E');
     else if (longdir == 'W')
-       Serial.print('-');
-    Serial.print(longitude/1000000, DEC); Serial.print("* ");
-    Serial.print((longitude/10000)%100, DEC); Serial.print('\''); Serial.print(' ');
-    Serial.print((longitude%10000)*6/1000, DEC); Serial.print('.');
-    Serial.print(((longitude%10000)*6/10)%100, DEC); Serial.println('"');
+       lcd.print('W');
+           lcd.print(' ');
+
+    lcd.print(longitude/1000000, DEC); lcd.print((char)223); lcd.print(' ');
+    lcd.print((longitude/10000)%100, DEC); lcd.print('\''); lcd.print(' ');
+    lcd.print((longitude%10000)*6/1000, DEC); lcd.print('.');
+    lcd.print(((longitude%10000)*6/10)%100, DEC); lcd.print('"');
+    lcd.print("   ");
    
+  }
   }
   //Serial.println(buffer);
 }
-
